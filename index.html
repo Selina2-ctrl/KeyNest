@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KeyNest ERP — Property Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg-surface: #141720;
+    --bg-card: #1a1e2a;
+    --bg-hover: #1f2435;
+    --bg-active: #252b3b;
+    --border: rgba(255,255,255,0.07);
+    --border-accent: rgba(255,255,255,0.12);
+    --text-primary: #e8eaf0;
+    --text-secondary: #8b90a0;
+    --text-muted: #555a6e;
+    --accent: #4f7fff;
+    --accent-dim: rgba(79,127,255,0.12);
+    --accent-glow: rgba(79,127,255,0.25);
+    --green: #2ecc71;
+    --green-dim: rgba(46,204,113,0.12);
+    --amber: #f39c12;
+    --amber-dim: rgba(243,156,18,0.12);
+    --red: #e74c3c;
+    --red-dim: rgba(231,76,60,0.12);
+    --purple: #9b59b6;
+    --purple-dim: rgba(155,89,182,0.12);
+    --teal: #1abc9c;
+    --teal-dim: rgba(26,188,156,0.12);
+    --font: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --sidebar-w: 220px;
+    --header-h: 56px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; font-size: 14px; }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; left: 0; top: 0; bottom: 0;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    height: var(--header-h);
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: #fff; letter-spacing: -0.5px;
+  }
+  .logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
+
+  .sidebar-section-label {
+    font-size: 10px; color: var(--text-muted); font-weight: 600;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    padding: 20px 18px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px; cursor: pointer; border-radius: 0;
+    color: var(--text-secondary); transition: all 0.15s;
+    font-size: 13.5px; font-weight: 400; position: relative;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 500; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 20px; background: var(--accent); border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 16px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; font-size: 10px; font-weight: 600;
+    background: var(--red); color: #fff; border-radius: 20px;
+    padding: 1px 6px; min-width: 18px; text-align: center;
+  }
+
+  .sidebar-footer {
+    margin-top: auto; padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    background: var(--bg-hover); border-radius: var(--radius); cursor: pointer;
+  }
+  .user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--text-muted); }
+
+  /* MAIN */
+  #main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* TOPBAR */
+  #topbar {
+    height: var(--header-h); background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px;
+    position: sticky; top: 0; z-index: 50; gap: 16px;
+  }
+  .topbar-title { font-size: 15px; font-weight: 600; flex: 1; }
+  .topbar-subtitle { font-size: 13px; color: var(--text-muted); }
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+  .breadcrumb span { color: var(--text-primary); font-weight: 500; }
+
+  .btn {
+    padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border-accent);
+    background: transparent; color: var(--text-primary); cursor: pointer;
+    font-size: 13px; font-weight: 500; font-family: var(--font);
+    display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg-hover); border-color: var(--border-accent); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3d6de8; border-color: #3d6de8; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-ghost { border-color: transparent; }
+  .btn-ghost:hover { background: var(--bg-hover); border-color: var(--border); }
+  .btn-danger { background: var(--red-dim); border-color: rgba(231,76,60,0.3); color: var(--red); }
+  .btn-success { background: var(--green-dim); border-color: rgba(46,204,113,0.3); color: var(--green); }
+
+  /* CONTENT */
+  #content { padding: 24px; flex: 1; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px;
+  }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; }
+  .card-value { font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .card-delta { font-size: 12px; }
+  .card-icon { width: 36px; height: 36px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+  .stat-card { cursor: default; }
+  .stat-up { color: var(--green); }
+  .stat-down { color: var(--red); }
+
+  /* KPI ACCENT BORDERS */
+  .kpi-blue { border-top: 2px solid var(--accent); }
+  .kpi-green { border-top: 2px solid var(--green); }
+  .kpi-amber { border-top: 2px solid var(--amber); }
+  .kpi-purple { border-top: 2px solid var(--purple); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: default; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg-hover); }
+  tbody td { padding: 12px 14px; color: var(--text-secondary); }
+  tbody td strong { color: var(--text-primary); font-weight: 500; }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+  .badge-red { background: var(--red-dim); color: var(--red); }
+  .badge-blue { background: var(--accent-dim); color: var(--accent); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); }
+  .badge-teal { background: var(--teal-dim); color: var(--teal); }
+  .badge-muted { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* FORM */
+  .form-group { margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 9px 12px; background: var(--bg);
+    border: 1px solid var(--border-accent); border-radius: var(--radius);
+    color: var(--text-primary); font-size: 13.5px; font-family: var(--font);
+    transition: border-color 0.15s; outline: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-select { cursor: pointer; }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  option { background: var(--bg-card); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 1000; display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card); border: 1px solid var(--border-accent);
+    border-radius: var(--radius-lg); width: 520px; max-width: 95vw; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-body { padding: 24px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--border); }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 4px; bottom: 4px; width: 1px; background: var(--border-accent); }
+  .timeline-item { position: relative; margin-bottom: 16px; }
+  .timeline-item::before { content: ''; position: absolute; left: -20px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .timeline-time { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+  .timeline-text { font-size: 13px; color: var(--text-secondary); }
+  .timeline-text strong { color: var(--text-primary); }
+
+  /* PROGRESS BAR */
+  .progress-bar { height: 6px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+  /* OCCUPANCY CHART */
+  .occupancy-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; margin: 12px 0 6px; }
+  .occ-bar { flex: 1; border-radius: 3px 3px 0 0; min-height: 4px; transition: height 0.4s ease; cursor: default; position: relative; }
+  .occ-bar:hover .occ-tooltip { display: block; }
+  .occ-tooltip { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--bg-surface); border: 1px solid var(--border-accent); border-radius: 4px; padding: 4px 8px; font-size: 11px; white-space: nowrap; color: var(--text-primary); z-index: 10; pointer-events: none; }
+  .occ-labels { display: flex; gap: 4px; }
+  .occ-label { flex: 1; text-align: center; font-size: 10px; color: var(--text-muted); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state h3 { font-size: 15px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  /* SEARCH BAR */
+  .search-bar { position: relative; }
+  .search-bar input { padding-left: 34px; width: 260px; }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 15px; pointer-events: none; }
+
+  /* PAGE HEADER */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* FILTERS */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-accent); background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 500; font-family: var(--font); cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(79,127,255,0.3); }
+
+  /* PROPERTY CARD */
+  .property-card { cursor: pointer; transition: border-color 0.15s; }
+  .property-card:hover { border-color: var(--border-accent); }
+  .property-img {
+    height: 120px; border-radius: var(--radius); margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 32px;
+    position: relative; overflow: hidden;
+  }
+  .property-status { position: absolute; top: 8px; right: 8px; }
+  .property-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .property-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  .property-rate { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .property-rate span { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+  /* BOOKING CARD */
+  .booking-row { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+  .booking-row:hover { border-color: var(--border-accent); }
+  .booking-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+  .booking-info { flex: 1; }
+  .booking-name { font-size: 13.5px; font-weight: 600; }
+  .booking-meta { font-size: 12px; color: var(--text-muted); }
+  .booking-dates { font-size: 12px; color: var(--text-secondary); text-align: right; white-space: nowrap; }
+  .booking-price { font-size: 14px; font-weight: 700; color: var(--text-primary); text-align: right; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab { padding: 10px 18px; font-size: 13.5px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--text-primary); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* SECTION */
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-24 { margin-bottom: 24px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .gap-12 { gap: 12px; }
+  .flex { display: flex; }
+  .flex-1 { flex: 1; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+
+  /* PAYMENT */
+  .payment-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .payment-row:last-child { border-bottom: none; }
+
+  /* NOTIFICATION DOT */
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+
+  /* TOAST */
+  #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: var(--bg-card); border: 1px solid var(--border-accent); border-radius: var(--radius); padding: 12px 16px; font-size: 13px; color: var(--text-primary); display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: slideIn 0.25s ease; min-width: 280px; max-width: 380px; }
+  .toast-success { border-left: 3px solid var(--green); }
+  .toast-error { border-left: 3px solid var(--red); }
+  .toast-info { border-left: 3px solid var(--accent); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 60px; }
+    .nav-item span, .sidebar-logo .logo-text, .sidebar-logo .logo-sub, .user-name, .user-role, .sidebar-section-label { display: none; }
+    .sidebar-footer { padding: 8px; }
+    .user-chip { justify-content: center; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    #content { padding: 16px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">KN</div>
+    <div>
+      <div class="logo-text">KeyNest</div>
+      <div class="logo-sub">ERP Platform</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section-label">Core Modules</div>
+  <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard', this)">
+    <span class="nav-icon">⊞</span><span>Dashboard</span>
+  </div>
+  <div class="nav-item" data-page="properties" onclick="navigate('properties', this)">
+    <span class="nav-icon">🏠</span><span>Properties</span>
+  </div>
+  <div class="nav-item" data-page="bookings" onclick="navigate('bookings', this)">
+    <span class="nav-icon">📅</span><span>Bookings</span>
+    <span class="nav-badge" id="pending-badge">3</span>
+  </div>
+  <div class="nav-item" data-page="guests" onclick="navigate('guests', this)">
+    <span class="nav-icon">👥</span><span>Guests</span>
+  </div>
+
+  <div class="sidebar-section-label">Finance</div>
+  <div class="nav-item" data-page="payments" onclick="navigate('payments', this)">
+    <span class="nav-icon">💳</span><span>Payments</span>
+  </div>
+  <div class="nav-item" data-page="reports" onclick="navigate('reports', this)">
+    <span class="nav-icon">📊</span><span>Reports</span>
+  </div>
+
+  <div class="sidebar-section-label">System</div>
+  <div class="nav-item" data-page="users" onclick="navigate('users', this)">
+    <span class="nav-icon">🔑</span><span>Users & Roles</span>
+  </div>
+  <div class="nav-item" data-page="audit" onclick="navigate('audit', this)">
+    <span class="nav-icon">🗂</span><span>Audit Log</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar">SA</div>
+      <div>
+        <div class="user-name">Sarah Admin</div>
+        <div class="user-role">System Admin</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN AREA -->
+<div id="main">
+  <header id="topbar">
+    <div style="flex:1">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-subtitle" id="topbar-sub">Overview — June 2025</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="showToast('Synced successfully','success')">↻ Sync</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-booking')">+ New Booking</button>
+    </div>
+  </header>
+
+  <main id="content">
+
+    <!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Operations Overview</div>
+          <div class="page-subtitle">Live status across all properties and bookings</div>
+        </div>
+      </div>
+
+      <!-- KPI ROW -->
+      <div class="grid-4 mb-24">
+        <div class="card stat-card kpi-blue">
+          <div class="card-header">
+            <div class="card-title">Total Revenue</div>
+            <div class="card-icon" style="background:var(--accent-dim);color:var(--accent)">$</div>
+          </div>
+          <div class="card-value">R 84,250</div>
+          <div class="card-delta stat-up">↑ 12.4% from last month</div>
+        </div>
+        <div class="card stat-card kpi-green">
+          <div class="card-header">
+            <div class="card-title">Occupancy Rate</div>
+            <div class="card-icon" style="background:var(--green-dim);color:var(--green)">⌂</div>
+          </div>
+          <div class="card-value">78%</div>
+          <div class="card-delta stat-up">↑ 5% vs last quarter</div>
+        </div>
+        <div class="card stat-card kpi-amber">
+          <div class="card-header">
+            <div class="card-title">Active Bookings</div>
+            <div class="card-icon" style="background:var(--amber-dim);color:var(--amber)">📋</div>
+          </div>
+          <div class="card-value">14</div>
+          <div class="card-delta" style="color:var(--text-muted)">3 pending approval</div>
+        </div>
+        <div class="card stat-card kpi-purple">
+          <div class="card-header">
+            <div class="card-title">Total Properties</div>
+            <div class="card-icon" style="background:var(--purple-dim);color:var(--purple)">🏘</div>
+          </div>
+          <div class="card-value">8</div>
+          <div class="card-delta" style="color:var(--text-muted)">6 active, 2 maintenance</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-24">
+        <!-- OCCUPANCY CHART -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Monthly Occupancy</div>
+            <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px">
+              <option>Last 7 months</option>
+            </select>
+          </div>
+          <div class="occupancy-bars" id="occ-chart"></div>
+          <div class="occ-labels" id="occ-labels"></div>
+        </div>
+
+        <!-- RECENT ACTIVITY -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Activity</div><span class="badge badge-blue">Live</span></div>
+          <div class="timeline" id="activity-feed"></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <!-- TODAY'S CHECK-INS -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Today's Check-ins</div><span class="badge badge-green">2</span></div>
+          <div id="today-checkins"></div>
+        </div>
+
+        <!-- TODAY'S CHECK-OUTS -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Today's Check-outs</div><span class="badge badge-amber">1</span></div>
+          <div id="today-checkouts"></div>
+        </div>
+
+        <!-- PROPERTY STATUS -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Property Status</div></div>
+          <div id="property-status-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ PROPERTIES ═══════════════════════ -->
+    <div id="page-properties" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Property Listings</div>
+          <div class="page-subtitle">Manage all units, rooms and apartments</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-property')">+ Add Property</button>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterProperties('all',this)">All (8)</button>
+        <button class="filter-btn" onclick="filterProperties('available',this)">Available</button>
+        <button class="filter-btn" onclick="filterProperties('occupied',this)">Occupied</button>
+        <button class="filter-btn" onclick="filterProperties('maintenance',this)">Maintenance</button>
+        <div class="search-bar" style="margin-left:auto">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-input" placeholder="Search properties..." oninput="searchProperties(this.value)">
+        </div>
+      </div>
+
+      <div class="grid-auto" id="property-grid"></div>
+    </div>
+
+    <!-- ═══════════════════════ BOOKINGS ═══════════════════════ -->
+    <div id="page-bookings" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Booking Management</div>
+          <div class="page-subtitle">Full booking lifecycle — reservations, check-ins, check-outs</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-booking')">+ New Booking</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="filterBookings('all',this)">All Bookings</div>
+        <div class="tab" onclick="filterBookings('pending',this)">Pending</div>
+        <div class="tab" onclick="filterBookings('confirmed',this)">Confirmed</div>
+        <div class="tab" onclick="filterBookings('checked_in',this)">Checked In</div>
+        <div class="tab" onclick="filterBookings('checked_out',this)">Checked Out</div>
+        <div class="tab" onclick="filterBookings('cancelled',this)">Cancelled</div>
+      </div>
+
+      <div id="bookings-list"></div>
+    </div>
+
+    <!-- ═══════════════════════ GUESTS ═══════════════════════ -->
+    <div id="page-guests" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Guest Directory</div>
+          <div class="page-subtitle">Guest profiles, history and contact management</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-guest')">+ Add Guest</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Guest</th><th>Email</th><th>Phone</th><th>Total Stays</th><th>Total Spend</th><th>Last Stay</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="guests-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ PAYMENTS ═══════════════════════ -->
+    <div id="page-payments" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Payment Ledger</div>
+          <div class="page-subtitle">Track all transactions, invoices and outstanding balances</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-payment')">+ Record Payment</button>
+      </div>
+
+      <div class="grid-3 mb-24">
+        <div class="card kpi-green">
+          <div class="card-title" style="margin-bottom:8px">Total Collected</div>
+          <div class="card-value" style="font-size:22px;color:var(--green)">R 84,250</div>
+        </div>
+        <div class="card kpi-amber">
+          <div class="card-title" style="margin-bottom:8px">Outstanding</div>
+          <div class="card-value" style="font-size:22px;color:var(--amber)">R 12,400</div>
+        </div>
+        <div class="card kpi-red" style="border-top-color:var(--red)">
+          <div class="card-title" style="margin-bottom:8px">Overdue</div>
+          <div class="card-value" style="font-size:22px;color:var(--red)">R 3,200</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Transaction History</div>
+          <select class="form-select" style="width:auto;padding:5px 10px;font-size:12px">
+            <option>All transactions</option><option>Paid</option><option>Pending</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>TXN ID</th><th>Guest</th><th>Property</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="payments-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ REPORTS ═══════════════════════ -->
+    <div id="page-reports" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Analytics & Reports</div>
+          <div class="page-subtitle">Business intelligence for property performance</div>
+        </div>
+        <button class="btn" onclick="showToast('Report exported to PDF','success')">⤓ Export PDF</button>
+      </div>
+
+      <div class="grid-2 mb-24">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Revenue by Property</div></div>
+          <div id="revenue-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Booking Source Distribution</div></div>
+          <div id="source-chart"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Monthly Performance Summary</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Month</th><th>Bookings</th><th>Revenue</th><th>Avg Stay</th><th>Occupancy</th><th>New Guests</th></tr></thead>
+            <tbody id="report-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ USERS ═══════════════════════ -->
+    <div id="page-users" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Users & Roles</div>
+          <div class="page-subtitle">Role-based access control for the ERP system</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-user')">+ Invite User</button>
+      </div>
+
+      <div class="grid-3 mb-24">
+        <div class="card" style="border-left:3px solid var(--red)">
+          <div class="card-title" style="margin-bottom:6px">Admin</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Full system access, all modules</div>
+          <div style="font-size:22px;font-weight:700">2 users</div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--accent)">
+          <div class="card-title" style="margin-bottom:6px">Staff</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Bookings, guests, check-in/out</div>
+          <div style="font-size:22px;font-weight:700">4 users</div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--green)">
+          <div class="card-title" style="margin-bottom:6px">View Only</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Read-only reports and dashboard</div>
+          <div style="font-size:22px;font-weight:700">1 user</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Last Login</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="users-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ AUDIT LOG ═══════════════════════ -->
+    <div id="page-audit" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Audit Trail</div>
+          <div class="page-subtitle">Full system activity log — every action recorded</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Timestamp</th><th>User</th><th>Module</th><th>Action</th><th>Entity</th><th>IP Address</th></tr></thead>
+            <tbody id="audit-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════ MODALS ═══════════════════════ -->
+
+<!-- NEW BOOKING MODAL -->
+<div class="modal-overlay" id="modal-booking">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Create New Booking</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-booking')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Guest Name</label>
+          <input class="form-input" type="text" placeholder="Full name" id="b-guest">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Guest Email</label>
+          <input class="form-input" type="email" placeholder="email@example.com" id="b-email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Property</label>
+        <select class="form-select" id="b-property">
+          <option value="">Select a property...</option>
+          <option>Unit A1 — Garden Suite</option>
+          <option>Unit B2 — Rooftop Loft</option>
+          <option>Unit C1 — Studio View</option>
+          <option>Unit D3 — Family Apartment</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Check-in Date</label>
+          <input class="form-input" type="date" id="b-checkin">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Check-out Date</label>
+          <input class="form-input" type="date" id="b-checkout">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Guests</label>
+          <select class="form-select" id="b-guests">
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Booking Source</label>
+          <select class="form-select">
+            <option>Direct</option><option>Airbnb</option><option>Booking.com</option><option>WhatsApp</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Special Requests</label>
+        <textarea class="form-textarea" placeholder="Any special requests or notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-booking')">Cancel</button>
+      <button class="btn btn-primary" onclick="createBooking()">Create Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW PROPERTY MODAL -->
+<div class="modal-overlay" id="modal-property">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New Property</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-property')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Property Name</label>
+        <input class="form-input" type="text" placeholder="e.g. Unit B3 — Beachfront Studio">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Property Type</label>
+          <select class="form-select">
+            <option>Studio</option><option>Apartment</option><option>Room</option><option>Loft</option><option>House</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bedrooms</label>
+          <select class="form-select">
+            <option>Studio</option><option>1</option><option>2</option><option>3</option><option>4+</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nightly Rate (ZAR)</label>
+          <input class="form-input" type="number" placeholder="1200">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Guests</label>
+          <input class="form-input" type="number" placeholder="4">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input class="form-input" type="text" placeholder="Full address">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" placeholder="Describe the property..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-property')">Cancel</button>
+      <button class="btn btn-primary" onclick="addProperty()">Add Property</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING DETAIL MODAL -->
+<div class="modal-overlay" id="modal-booking-detail">
+  <div class="modal" style="width:580px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="bdetail-title">Booking #BK-0001</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="bdetail-sub">Created 2 hours ago</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-booking-detail')">✕</button>
+    </div>
+    <div class="modal-body" id="bdetail-body"></div>
+    <div class="modal-footer" id="bdetail-actions"></div>
+  </div>
+</div>
+
+<!-- GUEST MODAL -->
+<div class="modal-overlay" id="modal-guest">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Guest</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-guest')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-input" type="text" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" type="text" placeholder="Last name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="tel" placeholder="+27 82 000 0000">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ID / Passport Number</label>
+        <input class="form-input" type="text" placeholder="For FICA compliance">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-guest')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-guest');showToast('Guest added successfully','success')">Add Guest</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Record Payment</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-payment')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Booking Reference</label>
+        <select class="form-select">
+          <option>BK-0001 — Amahle Dlamini</option>
+          <option>BK-0003 — James Osei</option>
+          <option>BK-0007 — Priya Naidoo</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount (ZAR)</label>
+          <input class="form-input" type="number" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <select class="form-select">
+            <option>Bank Transfer (EFT)</option><option>Cash</option><option>Card (POS)</option><option>SnapScan</option><option>PayFast</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Payment Type</label>
+        <select class="form-select">
+          <option>Full Payment</option><option>Deposit (50%)</option><option>Balance Due</option><option>Refund</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reference / Proof</label>
+        <input class="form-input" type="text" placeholder="Bank reference or proof number">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-payment')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-payment');showToast('Payment recorded successfully','success')">Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Invite Team Member</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input class="form-input" type="text" placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" placeholder="email@example.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">System Role</label>
+        <select class="form-select">
+          <option>Staff — Bookings & Guests</option>
+          <option>Staff — Housekeeping</option>
+          <option>Finance — Payments & Reports</option>
+          <option>View Only — Reports</option>
+          <option>Admin — Full Access</option>
+        </select>
+      </div>
+      <div style="background:var(--amber-dim);border:1px solid rgba(243,156,18,0.2);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--amber);margin-top:8px">
+        ⚠ An invitation email will be sent. The user will create their own password.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-user');showToast('Invitation sent successfully','success')">Send Invite</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// KEYNEST ERP — DATA STORE (simulated database)
+// In a real ERP: this would be a REST API + SQL database
+// ═══════════════════════════════════════════════════════════════
+
+const DB = {
+  properties: [
+    { id:'P001', name:'Garden Suite', unit:'Unit A1', type:'Studio', beds:1, rate:1200, maxGuests:2, status:'available', emoji:'🌿', amenities:['WiFi','Kitchen','Parking'], address:'12 Oak Street, Sandton' },
+    { id:'P002', name:'Rooftop Loft', unit:'Unit B2', type:'Loft', beds:2, rate:2400, maxGuests:4, status:'occupied', emoji:'🏙', amenities:['WiFi','Pool','Gym','Kitchen'], address:'45 High Rd, Rosebank' },
+    { id:'P003', name:'Studio View', unit:'Unit C1', type:'Studio', beds:1, rate:980, maxGuests:2, status:'available', emoji:'🌅', amenities:['WiFi','Kitchen'], address:'8 Bree St, Braamfontein' },
+    { id:'P004', name:'Family Apartment', unit:'Unit D3', type:'Apartment', beds:3, rate:3200, maxGuests:6, status:'occupied', emoji:'🏡', amenities:['WiFi','Kitchen','Parking','Garden'], address:'22 Valley Rd, Fourways' },
+    { id:'P005', name:'City Pad', unit:'Unit E1', type:'Apartment', beds:2, rate:1800, maxGuests:4, status:'available', emoji:'🌆', amenities:['WiFi','Gym'], address:'101 Commissioner St, CBD' },
+    { id:'P006', name:'Bush Retreat', unit:'Unit F2', type:'House', beds:4, rate:4500, maxGuests:8, status:'maintenance', emoji:'🌳', amenities:['WiFi','Pool','Braai','Parking'], address:'6 Game Farm Rd, Midrand' },
+    { id:'P007', name:'Cozy Nook', unit:'Unit G1', type:'Room', beds:1, rate:750, maxGuests:2, status:'available', emoji:'☕', amenities:['WiFi','Breakfast'], address:'3 Park Lane, Melville' },
+    { id:'P008', name:'Executive Suite', unit:'Unit H1', type:'Apartment', beds:2, rate:2800, maxGuests:3, status:'maintenance', emoji:'🖥', amenities:['WiFi','Kitchen','Parking','Office'], address:'88 Rivonia Rd, Sandton' }
+  ],
+
+  bookings: [
+    { id:'BK-0001', guestId:'G001', guestName:'Amahle Dlamini', email:'amahle@mail.com', propertyId:'P002', propertyName:'Rooftop Loft', checkin:'2025-06-10', checkout:'2025-06-15', guests:2, nights:5, total:12000, paid:12000, status:'checked_in', source:'Direct', createdAt:'2025-06-01', notes:'Early check-in requested' },
+    { id:'BK-0002', guestId:'G002', guestName:'James Osei', email:'josei@mail.com', propertyId:'P004', propertyName:'Family Apartment', checkin:'2025-06-12', checkout:'2025-06-18', guests:5, nights:6, total:19200, paid:9600, status:'confirmed', source:'Airbnb', createdAt:'2025-06-03', notes:'5th anniversary trip' },
+    { id:'BK-0003', guestId:'G003', guestName:'Priya Naidoo', email:'priya@mail.com', propertyId:'P001', propertyName:'Garden Suite', checkin:'2025-06-09', checkout:'2025-06-11', guests:1, nights:2, total:2400, paid:0, status:'pending', source:'WhatsApp', createdAt:'2025-06-08', notes:'' },
+    { id:'BK-0004', guestId:'G004', guestName:'Luca Bianchi', email:'luca@mail.com', propertyId:'P005', propertyName:'City Pad', checkin:'2025-06-05', checkout:'2025-06-09', guests:2, nights:4, total:7200, paid:7200, status:'checked_out', source:'Booking.com', createdAt:'2025-05-28', notes:'' },
+    { id:'BK-0005', guestId:'G005', guestName:'Zanele Mokoena', email:'zanele@mail.com', propertyId:'P003', propertyName:'Studio View', checkin:'2025-06-20', checkout:'2025-06-25', guests:2, nights:5, total:4900, paid:2450, status:'confirmed', source:'Direct', createdAt:'2025-06-07', notes:'Vegetarian meals required' },
+    { id:'BK-0006', guestId:'G006', guestName:'Ahmed Hassan', email:'ahmed@mail.com', propertyId:'P007', propertyName:'Cozy Nook', checkin:'2025-06-09', checkout:'2025-06-10', guests:1, nights:1, total:750, paid:750, status:'checked_in', source:'Direct', createdAt:'2025-06-09', notes:'' },
+    { id:'BK-0007', guestId:'G001', guestName:'Amahle Dlamini', email:'amahle@mail.com', propertyId:'P001', propertyName:'Garden Suite', checkin:'2025-05-01', checkout:'2025-05-05', guests:2, nights:4, total:4800, paid:4800, status:'checked_out', source:'Direct', createdAt:'2025-04-20', notes:'' },
+    { id:'BK-0008', guestId:'G007', guestName:'Kenji Tanaka', email:'kenji@mail.com', propertyId:'P002', propertyName:'Rooftop Loft', checkin:'2025-06-18', checkout:'2025-06-22', guests:3, nights:4, total:9600, paid:0, status:'pending', source:'Booking.com', createdAt:'2025-06-09', notes:'Late check-out if possible' },
+    { id:'BK-0009', guestId:'G008', guestName:'Fatima Okonkwo', email:'fatima@mail.com', propertyId:'P004', propertyName:'Family Apartment', checkin:'2025-06-25', checkout:'2025-07-01', guests:4, nights:6, total:19200, paid:0, status:'pending', source:'WhatsApp', createdAt:'2025-06-09', notes:'' },
+  ],
+
+  guests: [
+    { id:'G001', name:'Amahle Dlamini', email:'amahle@mail.com', phone:'+27 82 111 2233', stays:3, spend:21600, lastStay:'2025-06-10', status:'vip', idNum:'9501010001088' },
+    { id:'G002', name:'James Osei', email:'josei@mail.com', phone:'+27 71 444 5566', stays:1, spend:19200, lastStay:'2025-06-12', status:'active', idNum:'GH2019003421' },
+    { id:'G003', name:'Priya Naidoo', email:'priya@mail.com', phone:'+27 83 777 8899', stays:1, spend:2400, lastStay:'2025-06-09', status:'new', idNum:'9804050004087' },
+    { id:'G004', name:'Luca Bianchi', email:'luca@mail.com', phone:'+39 333 1234567', stays:2, spend:14400, lastStay:'2025-06-09', status:'active', idNum:'IT1990AB223344' },
+    { id:'G005', name:'Zanele Mokoena', email:'zanele@mail.com', phone:'+27 79 222 3344', stays:1, spend:4900, lastStay:'2025-06-20', status:'active', idNum:'9309090003086' },
+    { id:'G006', name:'Ahmed Hassan', email:'ahmed@mail.com', phone:'+27 65 555 6677', stays:4, spend:8200, lastStay:'2025-06-09', status:'vip', idNum:'EG1987002211' },
+    { id:'G007', name:'Kenji Tanaka', email:'kenji@mail.com', phone:'+81 90 1234 5678', stays:1, spend:9600, lastStay:'2025-06-18', status:'new', idNum:'JP1992004556' },
+    { id:'G008', name:'Fatima Okonkwo', email:'fatima@mail.com', phone:'+27 84 333 4455', stays:2, spend:14000, lastStay:'2025-06-25', status:'active', idNum:'NG1988001122' },
+  ],
+
+  payments: [
+    { id:'TXN-001', bookingId:'BK-0001', guest:'Amahle Dlamini', property:'Rooftop Loft', amount:12000, method:'Bank Transfer', status:'paid', date:'2025-06-01' },
+    { id:'TXN-002', bookingId:'BK-0002', guest:'James Osei', property:'Family Apartment', amount:9600, method:'Card (POS)', status:'paid', date:'2025-06-03' },
+    { id:'TXN-003', bookingId:'BK-0004', guest:'Luca Bianchi', property:'City Pad', amount:7200, method:'Bank Transfer', status:'paid', date:'2025-05-28' },
+    { id:'TXN-004', bookingId:'BK-0005', guest:'Zanele Mokoena', property:'Studio View', amount:2450, method:'SnapScan', status:'paid', date:'2025-06-07' },
+    { id:'TXN-005', bookingId:'BK-0006', guest:'Ahmed Hassan', property:'Cozy Nook', amount:750, method:'Cash', status:'paid', date:'2025-06-09' },
+    { id:'TXN-006', bookingId:'BK-0007', guest:'Amahle Dlamini', property:'Garden Suite', amount:4800, method:'Bank Transfer', status:'paid', date:'2025-05-01' },
+    { id:'TXN-007', bookingId:'BK-0002', guest:'James Osei', property:'Family Apartment', amount:9600, method:'Pending', status:'pending', date:'2025-06-12' },
+    { id:'TXN-008', bookingId:'BK-0003', guest:'Priya Naidoo', property:'Garden Suite', amount:2400, method:'Pending', status:'overdue', date:'2025-06-08' },
+    { id:'TXN-009', bookingId:'BK-0008', guest:'Kenji Tanaka', property:'Rooftop Loft', amount:9600, method:'Pending', status:'pending', date:'2025-06-18' },
+  ],
+
+  users: [
+    { id:'U001', name:'Sarah Admin', email:'sarah@keynest.co.za', role:'Admin', lastLogin:'2 mins ago', status:'active' },
+    { id:'U002', name:'Mike Operations', email:'mike@keynest.co.za', role:'Admin', lastLogin:'1 hour ago', status:'active' },
+    { id:'U003', name:'Tumi Sithole', email:'tumi@keynest.co.za', role:'Staff', lastLogin:'30 mins ago', status:'active' },
+    { id:'U004', name:'Linda Ferreira', email:'linda@keynest.co.za', role:'Staff', lastLogin:'Yesterday', status:'active' },
+    { id:'U005', name:'Dev Patel', email:'dev@keynest.co.za', role:'Staff', lastLogin:'2 days ago', status:'active' },
+    { id:'U006', name:'Yemi Adeyemi', email:'yemi@keynest.co.za', role:'Staff', lastLogin:'3 days ago', status:'inactive' },
+    { id:'U007', name:'Chloe Jacobs', email:'chloe@keynest.co.za', role:'View Only', lastLogin:'1 week ago', status:'active' },
+  ],
+
+  auditLog: [
+    { ts:'2025-06-09 14:32:11', user:'Sarah Admin', module:'Bookings', action:'CHECK-IN', entity:'BK-0006 / Ahmed Hassan', ip:'196.14.22.44' },
+    { ts:'2025-06-09 13:18:05', user:'Tumi Sithole', module:'Payments', action:'PAYMENT RECORDED', entity:'TXN-006 / R4,800', ip:'196.14.22.44' },
+    { ts:'2025-06-09 11:45:22', user:'Sarah Admin', module:'Bookings', action:'BOOKING CREATED', entity:'BK-0009 / Fatima Okonkwo', ip:'196.14.22.44' },
+    { ts:'2025-06-09 10:02:44', user:'Mike Operations', module:'Properties', action:'STATUS UPDATE', entity:'P006 → Maintenance', ip:'105.22.18.7' },
+    { ts:'2025-06-08 16:30:10', user:'Linda Ferreira', module:'Guests', action:'GUEST CREATED', entity:'G007 / Kenji Tanaka', ip:'196.14.22.44' },
+    { ts:'2025-06-08 15:12:33', user:'Tumi Sithole', module:'Bookings', action:'BOOKING CREATED', entity:'BK-0008 / Kenji Tanaka', ip:'196.14.22.44' },
+    { ts:'2025-06-07 09:44:22', user:'Sarah Admin', module:'Users', action:'USER INVITED', entity:'U007 / Chloe Jacobs', ip:'196.14.22.44' },
+    { ts:'2025-06-05 14:20:05', user:'Dev Patel', module:'Bookings', action:'CHECK-OUT', entity:'BK-0004 / Luca Bianchi', ip:'196.14.22.44' },
+  ]
+};
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION ENGINE
+// ═══════════════════════════════════════════════════════════════
+const pageTitles = {
+  dashboard: ['Dashboard', 'Operations Overview — June 2025'],
+  properties: ['Properties', 'Manage all your property listings'],
+  bookings: ['Bookings', 'Booking lifecycle management'],
+  guests: ['Guests', 'Guest directory and profiles'],
+  payments: ['Payments', 'Financial ledger and transactions'],
+  reports: ['Reports', 'Analytics and business intelligence'],
+  users: ['Users & Roles', 'Team access control'],
+  audit: ['Audit Log', 'Full system activity trail']
+};
+
+function navigate(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (el) el.classList.add('active');
+  const [title, sub] = pageTitles[page] || [page, ''];
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-sub').textContent = sub;
+  renderPage(page);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER ENGINE — populates each module
+// ═══════════════════════════════════════════════════════════════
+function renderPage(page) {
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'properties') renderProperties(DB.properties);
+  if (page === 'bookings') renderBookings(DB.bookings);
+  if (page === 'guests') renderGuests();
+  if (page === 'payments') renderPayments();
+  if (page === 'reports') renderReports();
+  if (page === 'users') renderUsers();
+  if (page === 'audit') renderAudit();
+}
+
+// --- DASHBOARD ---
+function renderDashboard() {
+  // Occupancy chart
+  const months = ['Dec','Jan','Feb','Mar','Apr','May','Jun'];
+  const values = [55, 62, 71, 68, 74, 80, 78];
+  const colors = ['#4f7fff','#4f7fff','#4f7fff','#4f7fff','#4f7fff','#4f7fff','#2ecc71'];
+  const chart = document.getElementById('occ-chart');
+  const labels = document.getElementById('occ-labels');
+  chart.innerHTML = values.map((v, i) => `
+    <div class="occ-bar" style="height:${v}%;background:${colors[i]};opacity:${i===6?1:0.45}">
+      <div class="occ-tooltip">${months[i]}: ${v}%</div>
+    </div>`).join('');
+  labels.innerHTML = months.map(m => `<div class="occ-label">${m}</div>`).join('');
+
+  // Activity feed
+  const feed = document.getElementById('activity-feed');
+  feed.innerHTML = `
+    <div class="timeline-item"><div class="timeline-time">14:32 today</div><div class="timeline-text"><strong>Ahmed Hassan</strong> checked in to Cozy Nook</div></div>
+    <div class="timeline-item"><div class="timeline-time">13:18 today</div><div class="timeline-text">Payment of <strong>R4,800</strong> recorded for BK-0007</div></div>
+    <div class="timeline-item"><div class="timeline-time">11:45 today</div><div class="timeline-text">New booking <strong>BK-0009</strong> created — Fatima Okonkwo</div></div>
+    <div class="timeline-item"><div class="timeline-time">10:02 today</div><div class="timeline-text">Unit F2 (Bush Retreat) moved to <strong>Maintenance</strong></div></div>
+    <div class="timeline-item"><div class="timeline-time">Yesterday</div><div class="timeline-text"><strong>Zanele Mokoena</strong> booking confirmed for Jun 20</div></div>`;
+
+  // Check-ins
+  document.getElementById('today-checkins').innerHTML = `
+    <div class="booking-row" style="margin-bottom:8px" onclick="viewBooking('BK-0001')">
+      <div class="booking-avatar">AD</div>
+      <div class="booking-info"><div class="booking-name">Amahle Dlamini</div><div class="booking-meta">Rooftop Loft · BK-0001</div></div>
+      <span class="badge badge-green">✓ Checked In</span>
+    </div>
+    <div class="booking-row" onclick="viewBooking('BK-0006')">
+      <div class="booking-avatar">AH</div>
+      <div class="booking-info"><div class="booking-name">Ahmed Hassan</div><div class="booking-meta">Cozy Nook · BK-0006</div></div>
+      <span class="badge badge-green">✓ Checked In</span>
+    </div>`;
+
+  // Check-outs
+  document.getElementById('today-checkouts').innerHTML = `
+    <div class="booking-row" onclick="viewBooking('BK-0004')">
+      <div class="booking-avatar">LB</div>
+      <div class="booking-info"><div class="booking-name">Luca Bianchi</div><div class="booking-meta">City Pad · BK-0004</div></div>
+      <span class="badge badge-muted">Checked Out</span>
+    </div>`;
+
+  // Property status
+  const psList = document.getElementById('property-status-list');
+  const statuses = {available:'green',occupied:'amber',maintenance:'red'};
+  psList.innerHTML = DB.properties.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:500">${p.unit}</div>
+      <span class="badge badge-${statuses[p.status]}">${p.status}</span>
+    </div>`).join('');
+}
+
+// --- PROPERTIES ---
+let propFilter = 'all';
+function renderProperties(props) {
+  const grid = document.getElementById('property-grid');
+  const filtered = propFilter === 'all' ? props : props.filter(p => p.status === propFilter);
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🏠</div><h3>No properties found</h3><p>Adjust your filter or add a new property</p></div>`;
+    return;
+  }
+  const statusMap = { available:'badge-green', occupied:'badge-amber', maintenance:'badge-red' };
+  const bgMap = { available:'linear-gradient(135deg,#0d1f12,#1a3424)', occupied:'linear-gradient(135deg,#1a1a0d,#2e2a10)', maintenance:'linear-gradient(135deg,#1a0d0d,#2e1a1a)' };
+  grid.innerHTML = filtered.map(p => `
+    <div class="card property-card" onclick="showPropertyDetail('${p.id}')">
+      <div class="property-img" style="background:${bgMap[p.status]}">
+        <span style="font-size:40px">${p.emoji}</span>
+        <span class="property-status badge ${statusMap[p.status]}">${p.status}</span>
+      </div>
+      <div class="property-name">${p.unit} — ${p.name}</div>
+      <div class="property-meta">🛏 ${p.beds === 1 ? '1 bed' : p.beds+' beds'} · 👥 Max ${p.maxGuests} · ${p.type}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+        <div class="property-rate">R${p.rate.toLocaleString()}<span>/night</span></div>
+        <button class="btn btn-sm" onclick="event.stopPropagation();openModal('modal-booking')">Book</button>
+      </div>
+    </div>`).join('');
+}
+
+function filterProperties(status, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  propFilter = status;
+  renderProperties(DB.properties);
+}
+
+function searchProperties(val) {
+  const filtered = DB.properties.filter(p =>
+    p.name.toLowerCase().includes(val.toLowerCase()) ||
+    p.unit.toLowerCase().includes(val.toLowerCase()) ||
+    p.type.toLowerCase().includes(val.toLowerCase())
+  );
+  renderProperties(filtered);
+}
+
+function showPropertyDetail(id) {
+  const p = DB.properties.find(x => x.id === id);
+  if (!p) return;
+  showToast(`${p.unit} — ${p.name} · R${p.rate}/night`, 'info');
+}
+
+// --- BOOKINGS ---
+let bookingFilter = 'all';
+function renderBookings(bookings) {
+  const list = document.getElementById('bookings-list');
+  const filtered = bookingFilter === 'all' ? bookings : bookings.filter(b => b.status === bookingFilter);
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📅</div><h3>No bookings found</h3><p>No bookings match this filter</p></div>`;
+    return;
+  }
+  const statusBadge = { pending:'badge-amber', confirmed:'badge-blue', checked_in:'badge-green', checked_out:'badge-muted', cancelled:'badge-red' };
+  const statusLabel = { pending:'Pending', confirmed:'Confirmed', checked_in:'Checked In', checked_out:'Checked Out', cancelled:'Cancelled' };
+  list.innerHTML = filtered.map(b => {
+    const initials = b.guestName.split(' ').map(w=>w[0]).join('').slice(0,2);
+    const balance = b.total - b.paid;
+    return `
+    <div class="booking-row" onclick="viewBooking('${b.id}')">
+      <div class="booking-avatar">${initials}</div>
+      <div class="booking-info">
+        <div class="booking-name">${b.guestName} <span style="font-size:11px;color:var(--text-muted);font-weight:400">#${b.id}</span></div>
+        <div class="booking-meta">🏠 ${b.propertyName} · ${b.guests} guests · via ${b.source}</div>
+      </div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-size:12px;color:var(--text-muted)">${b.checkin}</div>
+        <div style="font-size:10px;color:var(--text-muted)">→ ${b.checkout}</div>
+        <div style="font-size:11px;font-weight:500;margin-top:2px">${b.nights} nights</div>
+      </div>
+      <div style="text-align:right;min-width:100px">
+        <div class="booking-price">R${b.total.toLocaleString()}</div>
+        <div style="font-size:11px;color:${balance>0?'var(--amber)':'var(--green)'}">
+          ${balance > 0 ? 'Owes R'+balance.toLocaleString() : '✓ Paid'}
+        </div>
+      </div>
+      <span class="badge ${statusBadge[b.status]}">${statusLabel[b.status]}</span>
+    </div>`;
+  }).join('');
+}
+
+function filterBookings(status, tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  bookingFilter = status;
+  renderBookings(DB.bookings);
+}
+
+function viewBooking(id) {
+  const b = DB.bookings.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('bdetail-title').textContent = `Booking ${b.id}`;
+  document.getElementById('bdetail-sub').textContent = `Created ${b.createdAt} · via ${b.source}`;
+  const balance = b.total - b.paid;
+  const statusBadge = { pending:'badge-amber', confirmed:'badge-blue', checked_in:'badge-green', checked_out:'badge-muted', cancelled:'badge-red' };
+  const statusLabel = { pending:'Pending Approval', confirmed:'Confirmed', checked_in:'Currently Checked In', checked_out:'Checked Out', cancelled:'Cancelled' };
+  document.getElementById('bdetail-body').innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--accent)">${b.guestName.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+      <div>
+        <div style="font-size:16px;font-weight:600">${b.guestName}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${b.email}</div>
+      </div>
+      <span class="badge ${statusBadge[b.status]}" style="margin-left:auto">${statusLabel[b.status]}</span>
+    </div>
+    <div class="grid-2" style="margin-bottom:20px">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">PROPERTY</div>
+        <div style="font-weight:500">${b.propertyName}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${b.guests} guests</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">DATES</div>
+        <div style="font-weight:500">${b.checkin} → ${b.checkout}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${b.nights} nights</div>
+      </div>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px">
+      <div class="payment-row" style="padding:10px 14px"><span style="color:var(--text-muted);font-size:13px">Nightly rate</span><span style="font-weight:500">R${(b.total/b.nights).toLocaleString()}/night</span></div>
+      <div class="payment-row" style="padding:10px 14px"><span style="color:var(--text-muted);font-size:13px">Total (${b.nights} nights)</span><span style="font-weight:600">R${b.total.toLocaleString()}</span></div>
+      <div class="payment-row" style="padding:10px 14px"><span style="color:var(--text-muted);font-size:13px">Amount paid</span><span style="font-weight:500;color:var(--green)">R${b.paid.toLocaleString()}</span></div>
+      ${balance > 0 ? `<div class="payment-row" style="padding:10px 14px;background:var(--amber-dim)"><span style="color:var(--amber);font-size:13px;font-weight:500">Balance due</span><span style="font-weight:700;color:var(--amber)">R${balance.toLocaleString()}</span></div>` : `<div class="payment-row" style="padding:10px 14px;background:var(--green-dim)"><span style="color:var(--green);font-size:13px;font-weight:500">✓ Fully paid</span></div>`}
+    </div>
+    ${b.notes ? `<div style="background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--text-secondary)">📝 ${b.notes}</div>` : ''}`;
+
+  // Workflow actions
+  const actions = document.getElementById('bdetail-actions');
+  actions.innerHTML = '<button class="btn" onclick="closeModal(\'modal-booking-detail\')">Close</button>';
+  if (b.status === 'pending') {
+    actions.innerHTML += `<button class="btn btn-success" onclick="updateBookingStatus('${b.id}','confirmed')">✓ Confirm Booking</button>
+      <button class="btn btn-danger" onclick="updateBookingStatus('${b.id}','cancelled')">✕ Cancel</button>`;
+  } else if (b.status === 'confirmed') {
+    actions.innerHTML += `<button class="btn btn-primary" onclick="updateBookingStatus('${b.id}','checked_in')">→ Check In</button>`;
+  } else if (b.status === 'checked_in') {
+    actions.innerHTML += `<button class="btn btn-success" onclick="updateBookingStatus('${b.id}','checked_out')">⬛ Check Out</button>`;
+  }
+  openModal('modal-booking-detail');
+}
+
+function updateBookingStatus(id, newStatus) {
+  const b = DB.bookings.find(x => x.id === id);
+  if (!b) return;
+  b.status = newStatus;
+  closeModal('modal-booking-detail');
+  const msgs = { confirmed:'Booking confirmed!', cancelled:'Booking cancelled', checked_in:'Guest checked in successfully!', checked_out:'Guest checked out. Have a great day!' };
+  showToast(msgs[newStatus], newStatus === 'cancelled' ? 'error' : 'success');
+  // Update pending badge
+  const pending = DB.bookings.filter(x => x.status === 'pending').length;
+  document.getElementById('pending-badge').textContent = pending;
+  renderBookings(DB.bookings);
+
+  // Add to audit log
+  DB.auditLog.unshift({ ts: new Date().toLocaleString(), user:'Sarah Admin', module:'Bookings', action: newStatus.replace('_',' ').toUpperCase(), entity: id+' / '+b.guestName, ip:'196.14.22.44' });
+}
+
+// --- GUESTS ---
+function renderGuests() {
+  const statusBadge = { vip:'badge-purple', active:'badge-green', new:'badge-blue', inactive:'badge-muted' };
+  document.getElementById('guests-table').innerHTML = DB.guests.map(g => `
+    <tr>
+      <td><strong>${g.name}</strong></td>
+      <td>${g.email}</td>
+      <td>${g.phone}</td>
+      <td><strong>${g.stays}</strong></td>
+      <td style="color:var(--green)"><strong>R${g.spend.toLocaleString()}</strong></td>
+      <td>${g.lastStay}</td>
+      <td><span class="badge ${statusBadge[g.status]}">${g.status.toUpperCase()}</span></td>
+      <td><button class="btn btn-sm btn-ghost" onclick="showToast('Guest profile: ${g.name}','info')">View</button></td>
+    </tr>`).join('');
+}
+
+// --- PAYMENTS ---
+function renderPayments() {
+  const statusBadge = { paid:'badge-green', pending:'badge-amber', overdue:'badge-red' };
+  document.getElementById('payments-table').innerHTML = DB.payments.map(p => `
+    <tr>
+      <td><span style="font-family:var(--mono);font-size:12px;color:var(--text-muted)">${p.id}</span></td>
+      <td><strong>${p.guest}</strong></td>
+      <td>${p.property}</td>
+      <td style="font-weight:600">R${p.amount.toLocaleString()}</td>
+      <td>${p.method}</td>
+      <td><span class="badge ${statusBadge[p.status]}">${p.status.toUpperCase()}</span></td>
+      <td>${p.date}</td>
+      <td>
+        ${p.status !== 'paid' ? `<button class="btn btn-sm btn-success" onclick="markPaid('${p.id}')">Mark Paid</button>` : `<button class="btn btn-sm btn-ghost">Receipt</button>`}
+      </td>
+    </tr>`).join('');
+}
+
+function markPaid(id) {
+  const p = DB.payments.find(x => x.id === id);
+  if (p) { p.status = 'paid'; p.method = 'Bank Transfer'; renderPayments(); showToast('Payment marked as paid','success'); }
+}
+
+// --- REPORTS ---
+function renderReports() {
+  // Revenue by property bars
+  const rev = document.getElementById('revenue-chart');
+  const propRevenue = [
+    { name:'Rooftop Loft', rev:21600, color:'var(--accent)' },
+    { name:'Family Apt', rev:19200, color:'var(--green)' },
+    { name:'City Pad', rev:7200, color:'var(--amber)' },
+    { name:'Garden Suite', rev:7200, color:'var(--purple)' },
+    { name:'Studio View', rev:4900, color:'var(--teal)' },
+    { name:'Cozy Nook', rev:3700, color:'#e74c3c' },
+  ];
+  const maxR = Math.max(...propRevenue.map(x=>x.rev));
+  rev.innerHTML = propRevenue.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text-secondary);width:100px;flex-shrink:0;text-align:right">${p.name}</div>
+      <div style="flex:1;background:var(--bg-hover);border-radius:3px;height:20px;position:relative">
+        <div style="width:${(p.rev/maxR*100).toFixed(1)}%;background:${p.color};height:100%;border-radius:3px;opacity:0.8"></div>
+      </div>
+      <div style="font-size:12px;font-weight:600;width:72px;color:var(--text-primary)">R${p.rev.toLocaleString()}</div>
+    </div>`).join('');
+
+  // Source distribution
+  const sources = document.getElementById('source-chart');
+  const sourceData = [{name:'Direct',pct:42,color:'var(--accent)'},{name:'Booking.com',pct:28,color:'var(--amber)'},{name:'Airbnb',pct:18,color:'var(--red)'},{name:'WhatsApp',pct:12,color:'var(--green)'}];
+  sources.innerHTML = sourceData.map(s => `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+        <span style="color:var(--text-secondary)">${s.name}</span>
+        <span style="font-weight:600;color:${s.color}">${s.pct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${s.pct}%;background:${s.color}"></div></div>
+    </div>`).join('');
+
+  // Monthly table
+  const months = [
+    {month:'January',bookings:8,revenue:38400,avgStay:4.2,occ:'62%',newGuests:5},
+    {month:'February',bookings:9,revenue:41200,avgStay:3.8,occ:'67%',newGuests:6},
+    {month:'March',bookings:11,revenue:52000,avgStay:4.5,occ:'71%',newGuests:7},
+    {month:'April',bookings:10,revenue:48800,avgStay:4.0,occ:'68%',newGuests:4},
+    {month:'May',bookings:13,revenue:61400,avgStay:3.9,occ:'80%',newGuests:8},
+    {month:'June (so far)',bookings:9,revenue:84250,avgStay:4.1,occ:'78%',newGuests:3},
+  ];
+  document.getElementById('report-table').innerHTML = months.map((m,i) => `
+    <tr style="${i===5?'background:var(--accent-dim)':''}">
+      <td><strong>${m.month}</strong></td>
+      <td>${m.bookings}</td>
+      <td style="color:var(--green);font-weight:600">R${m.revenue.toLocaleString()}</td>
+      <td>${m.avgStay} nights</td>
+      <td>${m.occ}</td>
+      <td>${m.newGuests}</td>
+    </tr>`).join('');
+}
+
+// --- USERS ---
+function renderUsers() {
+  const roleColor = { Admin:'badge-red', Staff:'badge-blue', 'View Only':'badge-muted' };
+  document.getElementById('users-table').innerHTML = DB.users.map(u => `
+    <tr>
+      <td><strong>${u.name}</strong></td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--text-muted)">${u.email}</td>
+      <td><span class="badge ${roleColor[u.role]}">${u.role}</span></td>
+      <td style="color:var(--text-muted)">${u.lastLogin}</td>
+      <td><span class="badge ${u.status==='active'?'badge-green':'badge-muted'}">${u.status}</span></td>
+      <td><button class="btn btn-sm btn-ghost">Edit</button></td>
+    </tr>`).join('');
+}
+
+// --- AUDIT ---
+function renderAudit() {
+  const actionColor = { 'CHECK-IN':'badge-green','CHECK-OUT':'badge-muted','BOOKING CREATED':'badge-blue','PAYMENT RECORDED':'badge-teal','STATUS UPDATE':'badge-amber','USER INVITED':'badge-purple','CANCELLED':'badge-red','CONFIRMED':'badge-green' };
+  document.getElementById('audit-table').innerHTML = DB.auditLog.map(a => {
+    const color = Object.keys(actionColor).find(k => a.action.includes(k)) || 'badge-muted';
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text-muted)">${a.ts}</td>
+      <td><strong>${a.user}</strong></td>
+      <td><span class="badge badge-muted">${a.module}</span></td>
+      <td><span class="badge ${actionColor[color]||'badge-muted'}">${a.action}</span></td>
+      <td style="color:var(--text-secondary)">${a.entity}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text-muted)">${a.ip}</td>
+    </tr>`;
+  }).join('');
+}
+
+// --- BOOKING CREATION ---
+function createBooking() {
+  const guest = document.getElementById('b-guest').value;
+  const prop = document.getElementById('b-property').value;
+  if (!guest || !prop) { showToast('Please fill in guest name and property', 'error'); return; }
+  const newId = 'BK-' + String(DB.bookings.length + 1).padStart(4,'0');
+  DB.bookings.unshift({ id:newId, guestId:'G-NEW', guestName:guest, email:document.getElementById('b-email').value, propertyId:'P-NEW', propertyName:prop, checkin:document.getElementById('b-checkin').value||'TBD', checkout:document.getElementById('b-checkout').value||'TBD', guests:document.getElementById('b-guests').value, nights:3, total:3600, paid:0, status:'pending', source:'Direct', createdAt:new Date().toISOString().split('T')[0], notes:'' });
+  const pending = DB.bookings.filter(x => x.status === 'pending').length;
+  document.getElementById('pending-badge').textContent = pending;
+  DB.auditLog.unshift({ ts:new Date().toLocaleString(), user:'Sarah Admin', module:'Bookings', action:'BOOKING CREATED', entity:newId+' / '+guest, ip:'196.14.22.44' });
+  closeModal('modal-booking');
+  showToast(`Booking ${newId} created for ${guest}`, 'success');
+  renderBookings(DB.bookings);
+}
+
+function addProperty() {
+  closeModal('modal-property');
+  showToast('Property added to the system', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL ENGINE
+// ═══════════════════════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST ENGINE
+// ═══════════════════════════════════════════════════════════════
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<span style="font-size:14px">${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT — render the dashboard on load
+// ═══════════════════════════════════════════════════════════════
+renderDashboard();
+document.getElementById('pending-badge').textContent = DB.bookings.filter(b=>b.status==='pending').length;
+// Pre-set dates in booking form
+const today = new Date().toISOString().split('T')[0];
+const nextWeek = new Date(Date.now()+7*864e5).toISOString().split('T')[0];
+document.getElementById('b-checkin').value = today;
+document.getElementById('b-checkout').value = nextWeek;
+</script>
+</body>
+</html>
