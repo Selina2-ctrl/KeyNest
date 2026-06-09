@@ -50,6 +50,17 @@
     display: flex; flex-direction: column;
     position: fixed; left: 0; top: 0; bottom: 0;
     z-index: 100;
+    transition: transform 0.22s ease;
+  }
+  #sidebar-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+  }
+  #sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
+  .mobile-nav-toggle {
+    display: none; align-items: center; justify-content: center; width: 36px; height: 36px;
+    border-radius: var(--radius); border: 1px solid var(--border-accent); background: transparent;
+    color: var(--text-primary); cursor: pointer; font-size: 16px;
   }
   .sidebar-logo {
     height: var(--header-h);
@@ -338,12 +349,20 @@
 
   /* RESPONSIVE */
   @media (max-width: 900px) {
-    :root { --sidebar-w: 60px; }
-    .nav-item span, .sidebar-logo .logo-text, .sidebar-logo .logo-sub, .user-name, .user-role, .sidebar-section-label { display: none; }
+    body { overflow-x: hidden; }
+    #sidebar {
+      width: 280px;
+      transform: translateX(-100%);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+    }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; }
+    .nav-item span, .sidebar-logo .logo-text, .sidebar-logo .logo-sub, .user-name, .user-role, .sidebar-section-label { display: inline; }
     .sidebar-footer { padding: 8px; }
-    .user-chip { justify-content: center; }
+    .user-chip { justify-content: flex-start; }
     .grid-4 { grid-template-columns: repeat(2, 1fr); }
     .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .mobile-nav-toggle { display: inline-flex; }
   }
   @media (max-width: 600px) {
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
@@ -405,11 +424,13 @@
     </div>
   </div>
 </nav>
+<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <!-- MAIN AREA -->
 <div id="main">
   <header id="topbar">
-    <div style="flex:1">
+    <button class="mobile-nav-toggle" type="button" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+    <div style="flex:1; min-width:0; margin-left:8px">
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-subtitle" id="topbar-sub">Overview — June 2025</div>
     </div>
@@ -1059,6 +1080,18 @@ const pageTitles = {
   audit: ['Audit Log', 'Full system activity trail']
 };
 
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const isOpen = sidebar.classList.toggle('open');
+  backdrop.classList.toggle('show', isOpen);
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('show');
+}
+
 function navigate(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1067,6 +1100,7 @@ function navigate(page, el) {
   const [title, sub] = pageTitles[page] || [page, ''];
   document.getElementById('topbar-title').textContent = title;
   document.getElementById('topbar-sub').textContent = sub;
+  closeSidebar();
   renderPage(page);
 }
 
@@ -1474,6 +1508,12 @@ function showToast(msg, type = 'info') {
 // ═══════════════════════════════════════════════════════════════
 renderDashboard();
 document.getElementById('pending-badge').textContent = DB.bookings.filter(b=>b.status==='pending').length;
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 900) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('show');
+  }
+});
 // Pre-set dates in booking form
 const today = new Date().toISOString().split('T')[0];
 const nextWeek = new Date(Date.now()+7*864e5).toISOString().split('T')[0];
