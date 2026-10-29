@@ -381,7 +381,7 @@
   <p id="login-error" style="color:crimson;"></p>
 </div>
 
-<div id="app" style="display:none;">
+<div id="app" style="display:none; width:100%;">
   
 
   
@@ -427,7 +427,7 @@
   </div>
 
   <div class="sidebar-footer">
-    <div class="user-chip">
+    <div class="user-chip" onclick="logout()" title="Click to sign out" style="cursor:pointer">
       <div class="user-avatar">SA</div>
       <div>
         <div class="user-name">Sarah Admin</div>
@@ -1005,10 +1005,15 @@
 
 </div>
 
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<script>
+// ═══ SUPABASE CONNECTION + LOGIN ═══
 const SUPABASE_URL = 'https://hzfplccggwttwjgpsskh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_bmhW0dBomDIhdVZRB8dpwA_m3xVk5P8';
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // --- Show / hide screens ---
 function showLoginScreen() {
@@ -1018,7 +1023,7 @@ function showLoginScreen() {
 
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  document.getElementById('app').style.display = 'flex';
 }
 
 // --- Login button handler ---
@@ -1026,7 +1031,7 @@ async function handleLogin() {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
 
-  const { error } = await db.auth.signInWithPassword({ email, password });
+  const { error } = await sb.auth.signInWithPassword({ email, password });
 
   if (error) {
     document.getElementById('login-error').textContent = error.message;
@@ -1038,13 +1043,13 @@ async function handleLogin() {
 
 // --- Logout (connect this to your "Sarah Admin" menu or a button) ---
 async function logout() {
-  await db.auth.signOut();
+  await sb.auth.signOut();
   location.reload();
 }
 
 // --- On page load: already signed in? ---
 async function init() {
-  const { data: { session } } = await db.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
     showApp();
     loadAll();
@@ -1053,14 +1058,13 @@ async function init() {
   }
 }
 
-// Placeholder so nothing breaks yet. We'll fill this in when we load real data
+// Placeholder: real data loading goes here in the next step
 function loadAll() {
   console.log('Logged in! Data loading goes here.');
 }
 
 init();
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+</script>
 <script>
 // ═══════════════════════════════════════════════════════════════
 // KEYNEST ERP — DATA STORE (simulated database)
