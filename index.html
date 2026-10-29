@@ -380,9 +380,18 @@
   <input id="login-email" type="email" placeholder="Email" style="width:100%; padding:10px; margin:6px 0;">
   <input id="login-password" type="password" placeholder="Password" style="width:100%; padding:10px; margin:6px 0;">
   <button onclick="handleLogin()" style="width:100%; padding:10px;">Sign in</button>
-<button onclick="handleRegister()" style="width:100%; padding:10px; margin-top:8px;">Register as a new user</button>
-
+  <button onclick="sendPasswordReset()" style="width:100%;padding:8px;margin-top:4px;background:none;border:0;color:#4f7fff;cursor:pointer">Forgot password?</button>
+  <button onclick="handleRegister()" style="width:100%; padding:10px; margin-top:8px;">Register as a new user</button>
   <p id="login-error" style="color:crimson;"></p>
+</div>
+
+<div id="password-recovery-screen" style="display:none;max-width:360px;margin:15vh auto;padding:24px;font-family:sans-serif">
+  <h2>Set a new password</h2>
+  <p style="font-size:13px;color:#777">Choose a new password for your KeyNest account.</p>
+  <input id="recovery-password" type="password" autocomplete="new-password" placeholder="New password" style="width:100%;padding:10px;margin:6px 0">
+  <input id="recovery-password-confirm" type="password" autocomplete="new-password" placeholder="Confirm new password" style="width:100%;padding:10px;margin:6px 0">
+  <button onclick="updateRecoveredPassword()" style="width:100%;padding:10px;margin-top:8px">Update password</button>
+  <p id="recovery-error" style="color:crimson"></p>
 </div>
 
 <div id="app" style="display:none; width:100%;">
@@ -1040,18 +1049,62 @@ const SUPABASE_URL = 'https://hzfplccggwttwjgpsskh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_bmhW0dBomDIhdVZRB8dpwA_m3xVk5P8';   // publishable key: safe in the browser, RLS protects the data
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let passwordRecoveryActive = false;
+sb.auth.onAuthStateChange(event => {
+  if (event === 'PASSWORD_RECOVERY') showPasswordRecoveryScreen();
+});
 
 // --- Show / hide screens ---
 function showLoginScreen() {
   document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('password-recovery-screen').style.display = 'none';
   document.getElementById('app').style.display = 'none';
 }
 
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('password-recovery-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
 }
 
+function showPasswordRecoveryScreen() {
+  passwordRecoveryActive = true;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('password-recovery-screen').style.display = 'block';
+}
+
+async function sendPasswordReset() {
+  const email = document.getElementById('login-email').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.style.color = 'crimson';
+  errEl.textContent = '';
+  if (!email) { errEl.textContent = 'Enter your email address first.'; return; }
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) { errEl.textContent = error.message; return; }
+  errEl.style.color = '#2ecc71';
+  errEl.textContent = 'If an account uses this email, a password reset link has been sent.';
+}
+
+async function updateRecoveredPassword() {
+  const password = document.getElementById('recovery-password').value;
+  const confirmation = document.getElementById('recovery-password-confirm').value;
+  const errEl = document.getElementById('recovery-error');
+  errEl.textContent = '';
+  if (password.length < 8) { errEl.textContent = 'Use a password with at least 8 characters.'; return; }
+  if (password !== confirmation) { errEl.textContent = 'The passwords do not match.'; return; }
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) { errEl.textContent = error.message; return; }
+  await sb.auth.signOut();
+  passwordRecoveryActive = false;
+  document.getElementById('recovery-password').value = '';
+  document.getElementById('recovery-password-confirm').value = '';
+  showLoginScreen();
+  const loginMessage = document.getElementById('login-error');
+  loginMessage.style.color = '#2ecc71';
+  loginMessage.textContent = 'Password updated. Sign in with your new password.';
+}
 // --- Called once we know there is a signed-in user ---
 let dashboardRefreshTimer = null;
 function startSession() {
@@ -1067,6 +1120,7 @@ async function handleLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const errEl = document.getElementById('login-error');
+  errEl.style.color = 'crimson';
   errEl.textContent = '';
 
   const { error } = await sb.auth.signInWithPassword({ email, password });
@@ -1081,6 +1135,7 @@ async function handleRegister() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const errEl = document.getElementById('login-error');
+  errEl.style.color = 'crimson';
   errEl.textContent = '';
   if (!email || password.length < 8) { errEl.textContent = 'Enter an email and a password with at least 8 characters.'; return; }
   const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: email.split('@')[0] } } });
@@ -1106,7 +1161,8 @@ async function logout() {
 // --- On page load: already signed in? ---
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
-  if (session) startSession();
+  if (passwordRecoveryActive) showPasswordRecoveryScreen();
+  else if (session) startSession();
   else showLoginScreen();
 }
 

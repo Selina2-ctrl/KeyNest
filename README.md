@@ -71,7 +71,7 @@ The housekeeping migration adds region fields, cleaning tasks, checkout assignme
 
 ## Configure authentication and regions
 
-In the Supabase Dashboard, set the production Site URL and allowed redirect URLs under **Authentication → URL Configuration**. Include your local URL when developing locally. Enable email sign-ups if users should register from the login page, and configure email delivery for sign-up confirmations and invitations.
+In the Supabase Dashboard, set the production Site URL and allowed redirect URLs under **Authentication → URL Configuration**. Include your local URL when developing locally. Enable email sign-ups if users should register from the login page, and configure email delivery for sign-up confirmations, password resets, and invitations. Password reset links return to the current app URL, so add the GitHub Pages URL and any local URL you use to the allowed redirect URLs.
 
 For cleaner assignment, give each property a region and each housekeeper the same region. Matching ignores capitalization and surrounding spaces. Existing property and cleaner records need their regions set once. When a booking changes to **Checked Out**, Supabase creates a task and assigns it to an available housekeeper in that region. If no matching cleaner is available, an admin can assign the task to a housekeeper in the same region. Completion requires one or more room photos; the task records whether it was completed within five hours.
 
