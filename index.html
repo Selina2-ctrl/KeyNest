@@ -378,6 +378,8 @@
   <input id="login-email" type="email" placeholder="Email" style="width:100%; padding:10px; margin:6px 0;">
   <input id="login-password" type="password" placeholder="Password" style="width:100%; padding:10px; margin:6px 0;">
   <button onclick="handleLogin()" style="width:100%; padding:10px;">Sign in</button>
+<button onclick="handleRegister()" style="width:100%; padding:10px; margin-top:8px;">Register as a new user</button>
+
   <p id="login-error" style="color:crimson;"></p>
 </div>
 
@@ -422,12 +424,15 @@
   <div class="nav-item" data-page="users" onclick="navigate('users', this)">
     <span class="nav-icon">🔑</span><span>Users & Roles</span>
   </div>
+  <div class="nav-item" data-page="housekeeping" onclick="navigate('housekeeping', this)">
+    <span class="nav-icon">🧹</span><span>Housekeeping</span><span class="nav-badge" id="cleaning-badge" style="display:none"></span>
+  </div>
   <div class="nav-item" data-page="audit" onclick="navigate('audit', this)">
     <span class="nav-icon">🗂</span><span>Audit Log</span>
   </div>
 
   <div class="sidebar-footer">
-    <div class="user-chip" onclick="logout()" title="Click to sign out" style="cursor:pointer">
+    <div class="user-chip" onclick="openProfile()" title="View profile" style="cursor:pointer">
       <div class="user-avatar" id="me-avatar">…</div>
       <div>
         <div class="user-name" id="me-name">Signed in</div>
@@ -447,7 +452,7 @@
       <div class="topbar-subtitle" id="topbar-sub">Overview</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-ghost btn-sm" onclick="loadAll(true)">↻ Sync</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadAll(true)" title="Fetch the latest records from Supabase">↻ Sync</button>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-booking')">+ New Booking</button>
     </div>
   </header>
@@ -583,7 +588,8 @@
         <div class="tab" onclick="filterBookings('cancelled',this)">Cancelled</div>
       </div>
 
-      <div id="bookings-list"></div>
+      <input class="form-input" id="bookings-search" type="search" placeholder="Search guest, property, booking ID or email…" oninput="renderBookings(DB.bookings)" style="margin-bottom:16px;width:100%">
+<div id="bookings-list"></div>
     </div>
 
     <!-- ═══════════════════════ GUESTS ═══════════════════════ -->
@@ -592,6 +598,7 @@
         <div>
           <div class="page-title">Guest Directory</div>
           <div class="page-subtitle">Guest profiles, history and contact management</div>
+<input class="form-input" id="guests-search" type="search" placeholder="Search guest name, email or phone…" oninput="renderGuests()" style="margin:12px 0;width:100%">
         </div>
         <button class="btn btn-primary" onclick="openModal('modal-guest')">+ Add Guest</button>
       </div>
@@ -640,7 +647,8 @@
             <option value="all">All transactions</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="overdue">Overdue</option>
           </select>
         </div>
-        <div class="table-wrap">
+        <input class="form-input" id="payments-search" type="search" placeholder="Search guest name, transaction or property…" oninput="renderPayments()" style="margin:12px;width:calc(100% - 24px)">
+<div class="table-wrap">
           <table>
             <thead>
               <tr><th>TXN ID</th><th>Guest</th><th>Property</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr>
@@ -714,11 +722,17 @@
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Last Login</th><th>Status</th><th>Change role</th></tr></thead>
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Cleaner Region</th><th>Last Login</th><th>Status</th><th>Change role</th></tr></thead>
             <tbody id="users-table"></tbody>
           </table>
         </div>
       </div>
+    </div>
+
+    <!-- HOUSEKEEPING TASKS -->
+    <div id="page-housekeeping" class="page">
+      <div class="page-header"><div><div class="page-title">Housekeeping Tasks</div><div class="page-subtitle">Checkout cleanings assigned by property and cleaner region. Complete each task within five hours.</div></div></div>
+      <div id="cleaning-tasks-list"></div>
     </div>
 
     <!-- ═══════════════════════ AUDIT LOG ═══════════════════════ -->
@@ -727,6 +741,7 @@
         <div>
           <div class="page-title">Audit Trail</div>
           <div class="page-subtitle">Full system activity log — every action recorded</div>
+<input class="form-input" id="audit-search" type="search" placeholder="Search user, action, module or record…" oninput="renderAudit()" style="margin:12px 0;width:100%">
         </div>
       </div>
       <div class="card">
@@ -755,11 +770,11 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Guest Name</label>
-          <input class="form-input" type="text" placeholder="Full name" id="b-guest">
+          <input class="form-input" type="text" id="b-guest" placeholder="Full name">
         </div>
         <div class="form-group">
           <label class="form-label">Guest Email</label>
-          <input class="form-input" type="email" placeholder="email@example.com" id="b-email">
+          <input class="form-input" type="email" id="b-email" placeholder="email@example.com">
         </div>
       </div>
       <div class="form-group">
@@ -845,6 +860,10 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="form-label">Region (used for cleaner assignment)</label>
+        <input class="form-input" type="text" placeholder="e.g. Cape Town South" id="p-region">
+      </div>
+      <div class="form-group">
         <label class="form-label">Address</label>
         <input class="form-input" type="text" placeholder="Full address" id="p-address">
       </div>
@@ -900,7 +919,7 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input class="form-input" type="email" placeholder="email@example.com" id="g-email">
+          <input class="form-input" type="email" id="g-email" placeholder="email@example.com">
         </div>
         <div class="form-group">
           <label class="form-label">Phone</label>
@@ -972,22 +991,26 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Full Name</label>
-          <input class="form-input" type="text" placeholder="Full name">
+          <input class="form-input" type="text" id="invite-name" placeholder="Full name">
         </div>
         <div class="form-group">
           <label class="form-label">Email Address</label>
-          <input class="form-input" type="email" placeholder="email@example.com">
+          <input class="form-input" type="email" id="invite-email" placeholder="email@example.com">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">System Role</label>
-        <select class="form-select">
+        <select class="form-select" id="invite-role" onchange="toggleInviteRegion()">
           <option>Staff — Bookings & Guests</option>
           <option>Staff — Housekeeping</option>
           <option>Finance — Payments & Reports</option>
           <option>View Only — Reports</option>
           <option>Admin — Full Access</option>
         </select>
+      </div>
+      <div class="form-group" id="invite-region-wrap" style="display:none">
+        <label class="form-label">Cleaner region</label>
+        <input class="form-input" type="text" id="invite-region" placeholder="Must match the property region">
       </div>
       <div style="background:var(--amber-dim);border:1px solid rgba(243,156,18,0.2);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--amber);margin-top:8px">
         ⚠ An invitation email will be sent. The user will create their own password.
@@ -1001,6 +1024,7 @@
 </div>
 
 <!-- TOAST CONTAINER -->
+<div class="modal-overlay" id="modal-profile" onclick="if(event.target===this)closeModal('modal-profile')"><div class="modal"><div class="modal-header"><div class="modal-title">My Profile</div><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-profile')">×</button></div><div class="modal-body" id="profile-details"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="logout()">Sign out</button><button class="btn btn-primary" onclick="closeModal('modal-profile')">Done</button></div></div></div>
 <div id="toast-container"></div>
 
 </div>
@@ -1027,9 +1051,12 @@ function showApp() {
 }
 
 // --- Called once we know there is a signed-in user ---
+let dashboardRefreshTimer = null;
 function startSession() {
   showApp();
   loadAll();                                                // defined in the main script
+  if (dashboardRefreshTimer) clearInterval(dashboardRefreshTimer);
+  dashboardRefreshTimer = setInterval(() => loadAll(false), 60000);
   sb.rpc('touch_last_login').then(() => {}, () => {});      // records last login (ignored if it fails)
 }
 
@@ -1046,6 +1073,26 @@ async function handleLogin() {
     return;
   }
   startSession();
+}
+
+async function handleRegister() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if (!email || password.length < 8) { errEl.textContent = 'Enter an email and a password with at least 8 characters.'; return; }
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: email.split('@')[0] } } });
+  if (error) { errEl.textContent = error.message; return; }
+  if (data.session) startSession();
+  else errEl.textContent = 'Account created. Check your email to confirm it, then sign in.';
+}
+
+async function openProfile() {
+  const { data: { user } } = await sb.auth.getUser();
+  const email = user?.email || '—';
+  const name = ME.name || user?.user_metadata?.full_name || '—';
+  document.getElementById('profile-details').innerHTML = `<div class="form-group"><div class="form-label">Name</div><div>${esc(name)}</div></div><div class="form-group"><div class="form-label">Email</div><div>${esc(email)}</div></div><div class="form-group"><div class="form-label">Role</div><div>${esc(ROLE_LABEL[ME.role] || ME.role)}</div></div><div class="form-group"><div class="form-label">Region</div><div>${esc(ME.region || '—')}</div></div>`;
+  openModal('modal-profile');
 }
 
 // --- Logout ---
@@ -1072,7 +1119,7 @@ document.getElementById('login-password').addEventListener('keydown', e => {
 // ═══════════════════════════════════════════════════════════════
 
 // In-memory copy of the database, in the shape the render functions expect.
-const DB = { properties: [], bookings: [], guests: [], payments: [], users: [], auditLog: [] };
+const DB = { properties: [], bookings: [], guests: [], payments: [], users: [], auditLog: [], cleaningTasks: [] };
 let ME = { id: null, name: '', role: 'view_only' };
 
 // --- Small helpers ---
@@ -1119,13 +1166,14 @@ function dbError(error, fallback) {
 
 // --- Load everything from Supabase and map it into DB ---
 async function fetchAll() {
-  const [pr, gu, bk, pa, us, au] = await Promise.all([
+  const [pr, gu, bk, pa, us, au, ct] = await Promise.all([
     sb.from('properties').select('*').order('unit'),
     sb.from('guests').select('*').order('created_at', { ascending: false }),
     sb.from('bookings').select('*, guests(first_name,last_name,email), properties(name,unit)').order('created_at', { ascending: false }),
     sb.from('payments').select('*').order('created_at', { ascending: false }),
     sb.from('profiles').select('*').order('created_at'),
-    sb.from('audit_log').select('*').order('created_at', { ascending: false }).limit(100)
+    sb.from('audit_log').select('*').order('created_at', { ascending: false }).limit(100),
+    sb.from('cleaning_tasks').select('*').order('deadline_at')
   ]);
   const failed = [pr, gu, bk, pa].find(r => r.error);
   if (failed) throw failed.error;
@@ -1139,7 +1187,7 @@ async function fetchAll() {
   DB.properties = pr.data.map(p => ({
     id: p.id, name: esc(p.name), unit: esc(p.unit), type: esc(p.type), beds: p.bedrooms || 1,
     rate: Number(p.nightly_rate), maxGuests: p.max_guests, status: p.status, emoji: p.emoji || '🏠',
-    amenities: p.amenities || [], address: esc(p.address || ''), description: esc(p.description || '')
+    amenities: p.amenities || [], address: esc(p.address || ''), description: esc(p.description || ''), region: esc(p.region || '')
   }));
 
   DB.bookings = bk.data.map(b => {
@@ -1189,17 +1237,29 @@ async function fetchAll() {
   // Users (an admin sees everyone; other roles only see themselves)
   const { data: { session } } = await sb.auth.getSession();
   DB.users = (us.error ? [] : us.data).map(u => ({
-    id: u.id, name: esc(u.full_name), rawName: u.full_name, email: esc(u.email || '—'),
+    id: u.id, name: esc(u.full_name), rawName: u.full_name, email: esc(u.email || '—'), region: u.region || '',
     roleKey: u.role, role: ROLE_LABEL[u.role] || u.role,
     lastLogin: u.last_login ? timeAgo(u.last_login) : 'Never', status: u.last_login ? 'active' : 'invited'
   }));
   const me = DB.users.find(u => session && u.id === session.user.id);
-  ME = me ? { id: me.id, name: me.rawName, role: me.roleKey }
-          : { id: session ? session.user.id : null, name: session ? session.user.email : '', role: 'view_only' };
+  ME = me ? { id: me.id, name: me.rawName, role: me.roleKey, region: me.region }
+          : { id: session ? session.user.id : null, name: session ? session.user.email : '', role: 'view_only', region: '' };
 
   // Audit log (admins only, enforced by the database)
   const names = Object.fromEntries(DB.users.map(u => [u.id, u.name]));
   DB.auditLog = (au.error ? [] : au.data).map(a => mapAudit(a, names, bookByUuid, payByUuid));
+  DB.cleaningTasks = (ct.error ? [] : (ct.data || [])).map(t => {
+    const booking = DB.bookings.find(b => b.uuid === t.booking_id);
+    const property = DB.properties.find(p => p.id === t.property_id);
+    const cleaner = DB.users.find(u => u.id === t.assigned_to);
+    return { id: t.id, bookingId: booking?.id || '—', guest: booking?.guestName || '—', property: property ? `${property.unit} · ${property.name}` : '—', region: t.region || 'Unassigned region', assignedTo: t.assigned_to, cleaner: cleaner?.rawName || (t.assigned_to ? 'Assigned cleaner' : 'Unassigned'), deadline: t.deadline_at, status: t.status, wasLate: t.was_late, photos: t.photos || [] };
+  });
+  const taskNoticeKey = `keynest-cleaning-notices-${ME.id}`;
+  let notifiedTasks = [];
+  try { notifiedTasks = JSON.parse(localStorage.getItem(taskNoticeKey) || '[]'); } catch {}
+  const newTasks = DB.cleaningTasks.filter(t => t.assignedTo === ME.id && !notifiedTasks.includes(t.id));
+  if (newTasks.length) showToast(`${newTasks.length} new checkout cleaning task${newTasks.length === 1 ? '' : 's'} assigned to you.`, 'info');
+  try { localStorage.setItem(taskNoticeKey, JSON.stringify(DB.cleaningTasks.filter(t => t.assignedTo === ME.id).map(t => t.id))); } catch {}
 }
 
 function mapAudit(a, names, bookByUuid, payByUuid) {
@@ -1260,6 +1320,8 @@ function updateChrome() {
   setText('me-avatar', initialsOf(ME.name || '?'));
   setText('me-name', ME.name || 'Signed in');
   setText('me-role', ROLE_LABEL[ME.role] || ME.role);
+  const cleanBadge = document.getElementById('cleaning-badge');
+  if (cleanBadge) { const count = DB.cleaningTasks.filter(t => t.assignedTo === ME.id && t.status !== 'completed').length; cleanBadge.textContent = count; cleanBadge.style.display = count ? 'inline-flex' : 'none'; }
 }
 
 function currentPage() {
@@ -1345,20 +1407,21 @@ async function addProperty() {
   const rate = parseFloat(document.getElementById('p-rate').value);
   const max = parseInt(document.getElementById('p-max').value, 10);
   const address = document.getElementById('p-address').value.trim();
+  const region = document.getElementById('p-region').value.trim();
   const desc = document.getElementById('p-desc').value.trim();
   const amen = document.getElementById('p-amen').value.split(',').map(s => s.trim()).filter(Boolean);
 
-  if (!name || !(rate >= 0) || !(max > 0)) { showToast('Name, nightly rate and max guests are required', 'error'); return; }
+  if (!name || !(rate >= 0) || !(max > 0) || !region) { showToast('Name, nightly rate, max guests and region are required', 'error'); return; }
 
   const { error } = await sb.from('properties').insert({
     unit, name, type, bedrooms: bedsRaw === 'Studio' ? 1 : parseInt(bedsRaw, 10) || 1,
-    nightly_rate: rate, max_guests: max, address: address || null, description: desc || null,
+    nightly_rate: rate, max_guests: max, address: address || null, region: region || null, description: desc || null,
     emoji: TYPE_EMOJI[type] || '🏠', amenities: amen
   });
   if (dbError(error)) return;
 
   closeModal('modal-property');
-  clearFields(['p-unit', 'p-name', 'p-rate', 'p-max', 'p-address', 'p-desc', 'p-amen']);
+  clearFields(['p-unit', 'p-name', 'p-rate', 'p-max', 'p-address', 'p-region', 'p-desc', 'p-amen']);
   showToast('Property added to the system', 'success');
   await loadAll();
 }
@@ -1431,6 +1494,15 @@ async function recordPayment() {
   await loadAll();
 }
 
+async function saveCleanerRegion(id) {
+  const region = document.getElementById(`region-${id}`).value.trim();
+  if (!region) { showToast('Cleaner region is required.', 'error'); return; }
+  const { data, error } = await sb.from('profiles').update({ region }).eq('id', id).select('id');
+  if (dbError(error)) return;
+  if (!data?.length) { showToast('Your role cannot update this cleaner profile.', 'error'); return; }
+  showToast('Cleaner region saved.', 'success');
+  await loadAll();
+}
 async function changeRole(id, role) {
   const { data, error } = await sb.from('profiles').update({ role }).eq('id', id).select('id');
   if (dbError(error) || !data || !data.length) {
@@ -1441,9 +1513,24 @@ async function changeRole(id, role) {
   await loadAll();
 }
 
-function inviteUser() {
+function toggleInviteRegion() {
+  const isCleaner = document.getElementById('invite-role').value.includes('Housekeeping');
+  document.getElementById('invite-region-wrap').style.display = isCleaner ? 'block' : 'none';
+}
+
+async function inviteUser() {
+  const name = document.getElementById('invite-name').value.trim();
+  const email = document.getElementById('invite-email').value.trim();
+  const label = document.getElementById('invite-role').value;
+  const role = label.includes('Housekeeping') ? 'housekeeping' : label.includes('Finance') ? 'finance' : label.includes('View Only') ? 'view_only' : label.includes('Admin') ? 'admin' : 'staff';
+  const region = document.getElementById('invite-region').value.trim();
+  if (role === 'housekeeping' && !region) { showToast('Enter the cleaner region so checkout tasks can be assigned.', 'error'); return; }
+  if (!name || !email) { showToast('Enter the team member name and email.', 'error'); return; }
+  const { error } = await sb.functions.invoke('invite-user', { body: { name, email, role, region } });
+  if (error) { showToast(error.message + ' Deploy the invite-user Edge Function to enable invites.', 'error'); return; }
   closeModal('modal-user');
-  showToast('Invites need a server-side function and are not enabled in this demo. Add users in the Supabase dashboard for now.', 'info');
+  showToast('Invitation sent to ' + email, 'success');
+  await loadAll();
 }
 
 function viewGuest(id) {
@@ -1462,6 +1549,7 @@ const pageTitles = {
   payments: ['Payments', 'Financial ledger and transactions'],
   reports: ['Reports', 'Analytics and business intelligence'],
   users: ['Users & Roles', 'Team access control'],
+  housekeeping: ['Housekeeping', 'Checkout cleaning tasks'],
   audit: ['Audit Log', 'Full system activity trail']
 };
 
@@ -1501,6 +1589,7 @@ function renderPage(page) {
   if (page === 'reports') renderReports();
   if (page === 'users') renderUsers();
   if (page === 'audit') renderAudit();
+  if (page === 'housekeeping') renderCleaningTasks();
 }
 
 // --- DASHBOARD ---
@@ -1635,9 +1724,11 @@ function renderProperties(props) {
       </div>
       <div class="property-name">${p.unit} — ${p.name}</div>
       <div class="property-meta">🛏 ${p.beds === 1 ? '1 bed' : p.beds+' beds'} · 👥 Max ${p.maxGuests} · ${p.type}</div>
+      <div class="property-meta">Region: ${esc(p.region || 'Not set')}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
         <div class="property-rate">R${p.rate.toLocaleString()}<span>/night</span></div>
         <span style="display:flex;gap:6px">
+          <button class="btn btn-sm btn-ghost" title="Set cleaning region" onclick="event.stopPropagation();editPropertyRegion('${p.id}')">Region</button>
           <button class="btn btn-sm btn-ghost" title="${p.status === 'maintenance' ? 'Mark available' : 'Set to maintenance'}" onclick="event.stopPropagation();togglePropertyMaintenance('${p.id}')">🔧</button>
           <button class="btn btn-sm" onclick="event.stopPropagation();openBookingFor('${p.id}')">Book</button>
         </span>
@@ -1661,17 +1752,29 @@ function searchProperties(val) {
   renderProperties(filtered);
 }
 
+async function editPropertyRegion(id) {
+  const property = DB.properties.find(p => p.id === id);
+  if (!property) return;
+  const region = prompt('Set the property region. Cleaners must use the same region name.', property.region || '');
+  if (region === null) return;
+  if (!region.trim()) { showToast('Property region cannot be blank.', 'error'); return; }
+  const { error } = await sb.from('properties').update({ region: region.trim() }).eq('id', id);
+  if (dbError(error)) return;
+  showToast('Property region saved.', 'success');
+  await loadAll();
+}
 function showPropertyDetail(id) {
   const p = DB.properties.find(x => x.id === id);
   if (!p) return;
-  showToast(`${p.unit} — ${p.name} · R${p.rate}/night`, 'info');
+  showToast(`${p.unit} — ${p.name} · R${p.rate}/night · Region: ${p.region || 'Not set'}`, 'info');
 }
 
 // --- BOOKINGS ---
 let bookingFilter = 'all';
 function renderBookings(bookings) {
   const list = document.getElementById('bookings-list');
-  const filtered = bookingFilter === 'all' ? bookings : bookings.filter(b => b.status === bookingFilter);
+  const q = (document.getElementById('bookings-search')?.value || '').trim().toLowerCase();
+  const filtered = (bookingFilter === 'all' ? bookings : bookings.filter(b => b.status === bookingFilter)).filter(b => !q || [b.guestName,b.email,b.propertyName,b.id].some(v => String(v || '').toLowerCase().includes(q)));
   if (filtered.length === 0) {
     list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📅</div><h3>No bookings found</h3><p>No bookings match this filter</p></div>`;
     return;
@@ -1777,7 +1880,8 @@ async function updateBookingStatus(id, newStatus) {
 // --- GUESTS ---
 function renderGuests() {
   const statusBadge = { vip:'badge-purple', active:'badge-green', new:'badge-blue', inactive:'badge-muted' };
-  document.getElementById('guests-table').innerHTML = DB.guests.map(g => `
+  const q = (document.getElementById('guests-search')?.value || '').trim().toLowerCase();
+  document.getElementById('guests-table').innerHTML = DB.guests.filter(g => !q || [g.name,g.email,g.phone].some(v => String(v || '').toLowerCase().includes(q))).map(g => `
     <tr>
       <td><strong>${g.name}</strong></td>
       <td>${g.email}</td>
@@ -1795,7 +1899,8 @@ function renderPayments() {
   const statusBadge = { paid:'badge-green', pending:'badge-amber', overdue:'badge-red', refunded:'badge-muted' };
   const sel = document.getElementById('pay-filter');
   const f = sel ? sel.value : 'all';
-  const rows = DB.payments.filter(p => f === 'all' || p.status === f);
+  const q = (document.getElementById('payments-search')?.value || '').trim().toLowerCase();
+  const rows = DB.payments.filter(p => (f === 'all' || p.status === f) && (!q || [p.guest,p.property,p.id].some(v => String(v || '').toLowerCase().includes(q))));
 
   const sum = status => DB.payments.filter(p => p.status === status).reduce((s, p) => s + p.amount, 0);
   setText('kpi-collected', money(sum('paid') - sum('refunded')));
@@ -1926,16 +2031,18 @@ function renderUsers() {
       <td><strong>${u.name}</strong>${u.id === ME.id ? ' <span style="font-size:11px;color:var(--text-muted)">(you)</span>' : ''}</td>
       <td style="font-family:var(--mono);font-size:12px;color:var(--text-muted)">${u.email}</td>
       <td><span class="badge ${roleColor[u.roleKey] || 'badge-muted'}">${u.role}</span></td>
+      <td>${isAdmin && u.roleKey === 'housekeeping' ? `<div style="display:flex;gap:4px"><input class="form-input" id="region-${u.id}" value="${esc(u.region)}" placeholder="Region" style="width:120px;padding:4px"><button class="btn btn-sm btn-ghost" onclick="saveCleanerRegion('${u.id}')">Save</button></div>` : esc(u.region || '—')}</td>
       <td style="color:var(--text-muted)">${u.lastLogin}</td>
       <td><span class="badge ${u.status === 'active' ? 'badge-green' : 'badge-muted'}">${u.status}</span></td>
       <td>${isAdmin && u.id !== ME.id ? roleSelect(u) : '<span style="color:var(--text-muted)">—</span>'}</td>
-    </tr>`).join('') || `<tr><td colspan="6" style="color:var(--text-muted)">No users to show</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="7" style="color:var(--text-muted)">No users to show</td></tr>`;
 }
 
 // --- AUDIT ---
 function renderAudit() {
   const actionColor = { 'CHECK-IN':'badge-green','CHECK-OUT':'badge-muted','BOOKING CREATED':'badge-blue','PAYMENT RECORDED':'badge-teal','STATUS UPDATE':'badge-amber','USER INVITED':'badge-purple','CANCELLED':'badge-red','CONFIRMED':'badge-green' };
-  document.getElementById('audit-table').innerHTML = DB.auditLog.map(a => {
+  const q = (document.getElementById('audit-search')?.value || '').trim().toLowerCase();
+  document.getElementById('audit-table').innerHTML = DB.auditLog.filter(a => !q || [a.user,a.module,a.action,a.entity,a.rid].some(v => String(v || '').toLowerCase().includes(q))).map(a => {
     const key = Object.keys(actionColor).find(k => a.action.includes(k));
     return `<tr>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text-muted)">${a.ts}</td>
@@ -1948,11 +2055,53 @@ function renderAudit() {
   }).join('') || `<tr><td colspan="6" style="color:var(--text-muted)">No audit entries to show (the audit log is visible to admins only)</td></tr>`;
 }
 
+function renderCleaningTasks() {
+  const list = document.getElementById('cleaning-tasks-list');
+  const tasks = DB.cleaningTasks.filter(t => ME.role === 'admin' || t.assignedTo === ME.id);
+  if (!tasks.length) { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧹</div><h3>No cleaning tasks</h3><p>When a booking is checked out, a task will be assigned to a cleaner in the property region.</p></div>'; return; }
+  list.innerHTML = tasks.map(t => {
+    const remaining = new Date(t.deadline) - Date.now();
+    const late = remaining < 0 && t.status !== 'completed';
+    const time = t.status === 'completed' ? 'Completed' : late ? 'Deadline passed' : `${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m remaining`;
+    const status = t.status === 'completed' ? (t.wasLate ? 'Completed late' : 'Completed') : late ? 'Overdue' : t.status === 'cleaning' ? 'In progress' : 'Assigned';
+    const cleaners = DB.users.filter(u => u.roleKey === 'housekeeping' && u.region && t.region && u.region.trim().toLowerCase() === t.region.trim().toLowerCase());
+    const assign = ME.role === 'admin' && !t.assignedTo && t.status !== 'completed' ? `<div style="display:flex;gap:8px;margin-top:12px"><select class="form-select" id="cleaner-choice-${t.id}"><option value="">Select region cleaner…</option>${cleaners.map(c => `<option value="${c.id}">${esc(c.rawName)}</option>`).join('')}</select><button class="btn btn-sm btn-primary" onclick="assignCleaner('${t.id}')" ${cleaners.length ? '' : 'disabled'}>Assign</button></div>` : '';
+    return `<div class="card" style="margin-bottom:12px"><div class="card-header"><div><div class="card-title">${esc(t.property)} <span style="color:var(--text-muted);font-weight:400">· ${esc(t.bookingId)}</span></div><div style="font-size:12px;color:var(--text-secondary);margin-top:5px">Guest ${esc(t.guest)} · Region ${esc(t.region)}</div></div><span class="badge ${late || t.wasLate ? 'badge-red' : t.status === 'completed' ? 'badge-green' : 'badge-amber'}">${status}</span></div><div style="font-size:12px;color:${late?'var(--red)':'var(--text-secondary)'};margin:8px 0">Assigned to ${esc(t.cleaner)} · ${time} · Due ${new Date(t.deadline).toLocaleString()}</div>${t.photos.length ? `<div style="font-size:12px;color:var(--green)">${t.photos.length} room photo(s) uploaded</div>` : ''}${assign}${t.status !== 'completed' && t.assignedTo === ME.id ? `<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap"><input class="form-input" type="file" accept="image/*" multiple id="clean-photos-${t.id}" aria-label="Upload room photos"><button class="btn btn-primary btn-sm" onclick="completeCleaningTask('${t.id}')">Upload photos & mark clean</button></div>` : ''}</div>`;
+  }).join('');
+}
+
+async function assignCleaner(taskId) {
+  const cleanerId = document.getElementById(`cleaner-choice-${taskId}`)?.value;
+  if (!cleanerId) { showToast('Choose a cleaner first.', 'error'); return; }
+  const { error } = await sb.rpc('assign_cleaning_task', { p_task_id: taskId, p_cleaner_id: cleanerId });
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Cleaning task assigned by region.', 'success');
+  await loadAll();
+}
+async function completeCleaningTask(taskId) {
+  const input = document.getElementById(`clean-photos-${taskId}`);
+  const files = Array.from(input?.files || []);
+  if (!files.length) { showToast('Upload at least one room photo before marking clean.', 'error'); return; }
+  if (files.some(f => !f.type.startsWith('image/') || f.size > 10 * 1024 * 1024)) { showToast('Choose image files under 10 MB each.', 'error'); return; }
+  const paths = [];
+  for (const file of files) {
+    const ext = (file.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const path = `${taskId}/${ME.id}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await sb.storage.from('cleaning-photos').upload(path, file, { contentType: file.type, upsert: false });
+    if (error) { showToast(error.message, 'error'); return; }
+    paths.push(path);
+  }
+  const { error } = await sb.rpc('complete_cleaning_task', { p_task_id: taskId, p_photos: paths });
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('Room marked clean and photos saved.', 'success');
+  await loadAll();
+}
 // ═══════════════════════════════════════════════════════════════
 // MODAL ENGINE
 // ═══════════════════════════════════════════════════════════════
 function openModal(id) {
   document.getElementById(id).classList.add('open');
+  if (id === 'modal-user') toggleInviteRegion();
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
