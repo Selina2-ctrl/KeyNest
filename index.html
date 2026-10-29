@@ -373,6 +373,18 @@
 </head>
 <body>
 
+<div id="login-screen" style="display:none; max-width:360px; margin:15vh auto; padding:24px; font-family:sans-serif;">
+  <h2>KeyNest Login</h2>
+  <input id="login-email" type="email" placeholder="Email" style="width:100%; padding:10px; margin:6px 0;">
+  <input id="login-password" type="password" placeholder="Password" style="width:100%; padding:10px; margin:6px 0;">
+  <button onclick="handleLogin()" style="width:100%; padding:10px;">Sign in</button>
+  <p id="login-error" style="color:crimson;"></p>
+</div>
+
+<div id="app" style="display:none;">
+  
+
+  
 <!-- SIDEBAR -->
 <nav id="sidebar">
   <div class="sidebar-logo">
@@ -991,10 +1003,67 @@
 <!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
 
+</div>
+
+const SUPABASE_URL = 'https://hzfplccggwttwjgpsskh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bmhW0dBomDIhdVZRB8dpwA_m3xVk5P8';
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// --- Show / hide screens ---
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// --- Login button handler ---
+async function handleLogin() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  const { error } = await db.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    document.getElementById('login-error').textContent = error.message;
+    return;
+  }
+  showApp();
+  loadAll();
+}
+
+// --- Logout (connect this to your "Sarah Admin" menu or a button) ---
+async function logout() {
+  await db.auth.signOut();
+  location.reload();
+}
+
+// --- On page load: already signed in? ---
+async function init() {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    showApp();
+    loadAll();
+  } else {
+    showLoginScreen();
+  }
+}
+
+// Placeholder so nothing breaks yet. We'll fill this in when we load real data
+function loadAll() {
+  console.log('Logged in! Data loading goes here.');
+}
+
+init();
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════
 // KEYNEST ERP — DATA STORE (simulated database)
-// In a real ERP: this would be a REST API + SQL database
 // ═══════════════════════════════════════════════════════════════
 
 const DB = {
